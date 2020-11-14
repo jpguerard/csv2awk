@@ -73,8 +73,7 @@ This gives us:
 a,b,c,"x y","""x "" y"""
 ```
 
-Let's save our library as `csv2awk.awk` and use it to read the CSV
-file we just produced:
+Let's use `csv2awk.awk` to read the CSV file we just produced:
 
 ```sh
 echo 'a,b,c,"x y","""x "" y"""' \
