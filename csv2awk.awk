@@ -28,11 +28,7 @@ function csv_split( CSV_SEPARATOR,    FIELD_PATTERN, NB, SPLIT_LINE, IS_FIELD_CO
     for ( J = 1 ; J <= NB ; J++ ){
       IS_FIELD_COMPLETE = 0
       if ( I in CSV_LINE ) {
-        if ( J == 1 ) {
-          CSV_LINE[ I ] = CSV_LINE[ I ] SPLIT_LINE[ J ]
-        } else {
-          CSV_LINE[ I ] = CSV_LINE[ I ] CSV_SEPARATOR SPLIT_LINE[ J ]
-        }
+        CSV_LINE[ I ] = CSV_LINE[ I ] CSV_SEPARATOR SPLIT_LINE[ J ]
       } else {
         CSV_LINE[ I ] = SPLIT_LINE[ J ]
       }
@@ -47,7 +43,8 @@ function csv_split( CSV_SEPARATOR,    FIELD_PATTERN, NB, SPLIT_LINE, IS_FIELD_CO
     }
     if ( IS_FIELD_COMPLETE ) break
     if ( getline <= 0 ) break
-    CSV_LINE[ I ] = CSV_LINE[ I ] "\n"
+    $0 = CSV_LINE[ I ] "\n" $0
+    delete CSV_LINE[ I ]
   }
   # Rebuilding of the line with NULL separator
   NF = 0
