@@ -16,7 +16,8 @@
 # ... processing ...
 # { print csv_convert( "," ) }
 #
-function csv_split( CSV_SEPARATOR,    FIELD_PATTERN, NB, SPLIT_LINE, IS_FIELD_COMPLETE, I, J, CSV_LINE, OLD_OFS ){
+function csv_split( CSV_SEPARATOR,    FIELD_PATTERN, NB, SPLIT_LINE, IS_FIELD_COMPLETE, I, J, CSV_LINE, OLD_OFS, OLD_FNR ){
+  OLD_FNR = FNR
   if ( CSV_SEPARATOR == "" ) { CSV_SEPARATOR = "," }
   FIELD_PATTERN = "([^" CSV_SEPARATOR "]*)|(\"([^\"]|\"\")+(\"|$))"
   # Split the CSV line into CSV_LINE
@@ -54,6 +55,7 @@ function csv_split( CSV_SEPARATOR,    FIELD_PATTERN, NB, SPLIT_LINE, IS_FIELD_CO
     $I = gensub( /""/, "\"", "g", CSV_LINE[ I ] )
   }
   OFS = OLD_OFS
+  FNR = OLD_FNR
 }
 function csv_convert( CSV_SEPARATOR,    CSV_LINE, CSV_FIELD, MUST_ESCAPE ){
   if ( CSV_SEPARATOR == "" ) { CSV_SEPARATOR = "," }
