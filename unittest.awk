@@ -2,9 +2,11 @@
 BEGIN{
   FILE_ERR_COUNT = 0
   TEST_COUNT = 0
+  IGNORE = 0
 }
 BEGINFILE {
   if ( ( FILENAME in SEEN ) || ( FILENAME !~ /[.]csv$/ ) ){
+    IGNORE = 1
     nextfile
   }
   DAT_FILE = gensub( /[.]csv$/, ".dat", 1, FILENAME )
@@ -43,11 +45,15 @@ BEGINFILE {
   }
 }
 ENDFILE {
-  if ( ! ERR_COUNT ){
-    printf( "Test %-32.32s OK\n", TEST_NAME )
+  if ( IGNORE ){
+    IGNORE = 0
   } else {
-    printf( "Test %-32.32s FAILED (%d errors)\n", TEST_NAME, ERR_COUNT )
-    FILE_ERR_COUNT++
+    if ( ! ERR_COUNT ){
+      printf( "Test %-32.32s OK\n", TEST_NAME )
+    } else {
+      printf( "Test %-32.32s FAILED (%d errors)\n", TEST_NAME, ERR_COUNT )
+      FILE_ERR_COUNT++
+    }
   }
 }
 END {
