@@ -1,6 +1,6 @@
 # csv2awk.awk - CSV-file processing with Gawk 4.0+
 #
-# Written in 2020 by Jean-Philippe Guérard <jean-philippe.guerard@tigreraye.org>
+# (c) 2020-2022 Jean-Philippe Guérard <jean-philippe.guerard@tigreraye.org>
 #
 # To the extent possible under law, the author(s) have dedicated all
 # copyright and related and neighboring rights to this software to the
@@ -16,58 +16,70 @@
 # ... processing ...
 # { print csv_convert( "," ) }
 #
-function csv_split( CSV_SEPARATOR,    FIELD_PATTERN, NB, SPLIT_LINE, IS_FIELD_COMPLETE, I, J, CSV_LINE, OLD_FNR ){
-  OLD_FNR = FNR
-  if ( CSV_SEPARATOR == "" ) { CSV_SEPARATOR = "," }
-  FIELD_PATTERN = "([^" CSV_SEPARATOR "]*)|(\"([^\"]|\"\")+(\"|$))"
-  # Split the CSV line into CSV_LINE
-  I = 1
-  split( "", CSV_LINE )
-  while( 1 ) {
-    sub( /\r$/, "" )
-    NB = patsplit( $0, SPLIT_LINE, FIELD_PATTERN )
-    for ( J = 1 ; J <= NB ; J++ ){
-      IS_FIELD_COMPLETE = 0
-      if ( I in CSV_LINE ) {
-        CSV_LINE[ I ] = CSV_LINE[ I ] CSV_SEPARATOR SPLIT_LINE[ J ]
-      } else {
-        CSV_LINE[ I ] = SPLIT_LINE[ J ]
-      }
-      if ( CSV_LINE[ I ] ~ /^"([^"]|"")+"$/ ){
-        CSV_LINE[ I ] = substr( CSV_LINE[ I ], 2, length( CSV_LINE[ I ] ) - 2 )
-        IS_FIELD_COMPLETE = 1
-        I++
-      } else if ( CSV_LINE[ I ] ~ "^[^" CSV_SEPARATOR "\"]*$" ) {
-        IS_FIELD_COMPLETE = 1
-        I++
-      }
-    }
-    if ( IS_FIELD_COMPLETE ) break
-    if ( getline <= 0 ) break
-    $0 = CSV_LINE[ I ] "\n" $0
-    delete CSV_LINE[ I ]
-  }
-  # Rebuilding of the line with NULL separator
-  NF = 0
-  for ( I = 1 ; I <= length( CSV_LINE ) ; I++ ){
-    $I = gensub( /""/, "\"", "g", CSV_LINE[ I ] )
-  }
-  FNR = OLD_FNR
+
+function csv_convert(csv_sep, csv_line, csv_field, must_escape, i)
+{
+	if (csv_sep == "") {
+		csv_sep = ","
+	}
+	must_escape = "[\n\"" csv_sep "]"
+	for (i = 1; i <= NF; i++) {
+		if ($i ~ must_escape) {
+			csv_field = "\"" (gensub(/"/, "\"\"", "g", $i)) "\""
+		} else {
+			csv_field = $i
+		}
+		if (csv_line) {
+			csv_line = csv_line csv_sep csv_field
+		} else {
+			csv_line = csv_field
+		}
+	}
+	return csv_line
 }
-function csv_convert( CSV_SEPARATOR,    CSV_LINE, CSV_FIELD, MUST_ESCAPE ){
-  if ( CSV_SEPARATOR == "" ) { CSV_SEPARATOR = "," }
-  MUST_ESCAPE = "[\n\"" CSV_SEPARATOR "]"
-  for ( I = 1 ; I <= NF ; I++ ){
-    if ( $I ~ MUST_ESCAPE ){
-      CSV_FIELD = "\"" gensub( /"/, "\"\"", "g", $I ) "\""
-    } else {
-      CSV_FIELD = $I
-    }
-    if ( CSV_LINE ){
-      CSV_LINE = CSV_LINE CSV_SEPARATOR CSV_FIELD
-    } else {
-      CSV_LINE = CSV_FIELD
-    }
-  }
-  return CSV_LINE
+
+function csv_split(csv_sep, field_pattern, n, t_split_line, is_field_complete, i, j, t_csv_line, old_fnr)
+{
+	old_fnr = FNR
+	if (csv_sep == "") {
+		csv_sep = ","
+	}
+	field_pattern = "([^" csv_sep "]*)|(\"([^\"]|\"\")+(\"|$))"
+	# Split the CSV line into t_csv_line
+	i = 1
+	split("", t_csv_line, FS)
+	while (1) {
+		sub(/\r$/, "", $0)
+		n = patsplit($0, t_split_line, field_pattern)
+		for (j = 1; j <= n; j++) {
+			is_field_complete = 0
+			if (i in t_csv_line) {
+				t_csv_line[i] = t_csv_line[i] csv_sep t_split_line[j]
+			} else {
+				t_csv_line[i] = t_split_line[j]
+			}
+			if (t_csv_line[i] ~ /^"([^"]|"")+"$/) {
+				t_csv_line[i] = substr(t_csv_line[i], 2, length(t_csv_line[i]) - 2)
+				is_field_complete = 1
+				i++
+			} else if (t_csv_line[i] ~ ("^[^" csv_sep "\"]*$")) {
+				is_field_complete = 1
+				i++
+			}
+		}
+		if (is_field_complete) {
+			break
+		}
+		if ((getline) <= 0) {
+			break
+		}
+		$0 = t_csv_line[i] "\n" $0
+		delete t_csv_line[i]
+	}
+	# Rebuilding the line
+	NF = 0
+	for (i = 1; i <= length(t_csv_line); i++) {
+		$i = gensub(/""/, "\"", "g", t_csv_line[i])
+	}
+	FNR = old_fnr
 }
